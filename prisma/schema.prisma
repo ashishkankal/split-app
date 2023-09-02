@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// schema.prisma
+
+// Define the User model
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  groups Group[]
+  memberships GroupMembership[]
+  paidExpenses Expenses[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+// Define the Group model
+model Group {
+  id        Int      @id @default(autoincrement())
+  name      String?
+  owner    User?    @relation(fields: [ownerId], references: [id])
+  ownerId Int?
+  members GroupMembership[]
+  expenses Expenses[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+}
+
+model GroupMembership {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  groupId    Int
+  user       User     @relation(fields: [userId], references: [id])
+  group      Group    @relation(fields: [groupId], references: [id])
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  @@unique([userId, groupId])
+}
+
+model Expenses {
+  id          Int      @id @default(autoincrement())
+  title       String
+  payeeId     Int
+  payee       User     @relation(fields: [payeeId], references: [id])
+  groupId     Int
+  group       Group    @relation(fields: [groupId], references: [id])
+  splits      Json?
+  amount      Float
+  splitType   ExpenseSplitType @default(EQUAL)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+}
+
+enum ExpenseSplitType {
+  EQUAL
+  PERCENTAGE
+  EXACT
+}
